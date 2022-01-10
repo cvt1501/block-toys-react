@@ -1,5 +1,5 @@
 import mockFetch from "cross-fetch";
-import reducer, { checkNodeStatus } from "./nodes";
+import reducer, { checkNodeStatus, getBlocks, getBlocksFromApi } from "./nodes";
 import { Node } from "../types/Node";
 import initialState from "./initialState";
 
@@ -17,6 +17,7 @@ describe("Reducers::Nodes", () => {
     online: false,
     name: "Node 1",
     loading: false,
+    blocks: []
   };
 
   const nodeB = {
@@ -24,6 +25,7 @@ describe("Reducers::Nodes", () => {
     online: false,
     name: "Node 2",
     loading: false,
+    blocks: []
   };
 
   it("should set initial state by default", () => {
@@ -117,6 +119,7 @@ describe("Actions::Nodes", () => {
     online: false,
     name: "Node 1",
     loading: false,
+    blocks: []
   };
 
   it("should fetch the node status", async () => {
@@ -128,7 +131,7 @@ describe("Actions::Nodes", () => {
         },
       })
     );
-    await checkNodeStatus(node)(dispatch, () => {}, {});
+    await checkNodeStatus(node)(dispatch, () => { }, {});
 
     const expected = expect.arrayContaining([
       expect.objectContaining({
@@ -146,7 +149,7 @@ describe("Actions::Nodes", () => {
 
   it("should fail to fetch the node status", async () => {
     mockedFech.mockReturnValueOnce(Promise.reject(new Error("Network Error")));
-    await checkNodeStatus(node)(dispatch, () => {}, {});
+    await checkNodeStatus(node)(dispatch, () => { }, {});
     const expected = expect.arrayContaining([
       expect.objectContaining({
         type: checkNodeStatus.pending.type,
@@ -158,6 +161,42 @@ describe("Actions::Nodes", () => {
         error: expect.objectContaining({ message: "Network Error" }),
       }),
     ]);
+
+    expect(dispatch.mock.calls.flat()).toEqual(expected);
+  });
+
+  it('should fetch the blocks', async () => {
+
+    const block = [
+      {
+        id: 2,
+        type: 'test 2',
+        attributes: {
+          index: 2,
+          timestamp: 12342321,
+          data: 'Data test 2',
+          'previous-hash': '123456789',
+          hash: '9F86D081884C7D659A2FEAA0C55AD015A3BF4F1B2B0B822CD15D6C15B0F00A081'
+        }
+      }
+    ];
+
+    mockedFech.mockReturnValueOnce(Promise.resolve({
+      status: 200,
+      json() {
+        return Promise.resolve({ data: block })
+      }
+    }))
+
+    await getBlocks(node)(dispatch, () => { }, {});
+
+    const expected = expect.arrayContaining([
+      expect.objectContaining({
+        type: getBlocks.fulfilled.type,
+        meta: expect.objectContaining({ arg: node }),
+        payload: { data: block },
+      }),
+    ])
 
     expect(dispatch.mock.calls.flat()).toEqual(expected);
   });

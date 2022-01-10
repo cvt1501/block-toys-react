@@ -10,11 +10,13 @@ import {
 import { styled } from "@mui/material/styles";
 import colors from "../constants/colors";
 import Status from "./Status";
-import { Node as NodeType } from "../types/Node";
+import { BlockType, Node as NodeType } from "../types/Node";
+import Block from '../components/Block';
 
 type Props = {
   node: NodeType;
   expanded: boolean;
+  blocks: BlockType[]
   toggleNodeExpanded: (node: NodeType) => void;
 };
 
@@ -59,11 +61,20 @@ const TypographySecondaryHeading = styled(Typography)(({ theme }) => ({
   lineHeight: 2,
 }));
 
-const Node: React.FC<Props> = ({ node, expanded, toggleNodeExpanded }) => {
+const BlockBoxContainer = styled(Box)({
+  background: "rgba(0, 0, 0, 0.12);",
+  display: "flex",
+  alignItems: "flex-start",
+  flexDirection: "column",
+  marginBottom: 4,
+  padding: 8
+});
+
+const Node: React.FC<Props> = ({ node, expanded, toggleNodeExpanded, blocks }) => {
   return (
     <AccordionRoot
       elevation={3}
-      expanded={expanded}
+      expanded={expanded && node.online}
       onChange={() => toggleNodeExpanded(node)}
     >
       <AccordionSummaryContainer expandIcon={<ExpandMoreIcon />}>
@@ -80,7 +91,13 @@ const Node: React.FC<Props> = ({ node, expanded, toggleNodeExpanded }) => {
         </BoxSummaryContent>
       </AccordionSummaryContainer>
       <AccordionDetails>
-        <Typography>Blocks go here</Typography>
+        {
+          blocks.map(block => (
+            <BlockBoxContainer key={block.id}>
+              <Block {...block} />
+            </BlockBoxContainer>
+          ))
+        }
       </AccordionDetails>
     </AccordionRoot>
   );

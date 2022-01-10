@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import initialState from "./initialState";
-import { Node } from "../types/Node";
+import { BlockType, Node } from "../types/Node";
 import { RootState } from "../store/configureStore";
 import fetch from "cross-fetch";
 
@@ -17,12 +17,33 @@ export const checkNodeStatus = createAsyncThunk(
   }
 );
 
+
+export const getBlocks = createAsyncThunk(
+  "nodes/getBlocks",
+  async (node: Node) => {
+    const response = await fetch(`${node.url}/api/v1/blocks`);
+    const data: { data: BlockType[] } = await response.json();
+    return data;
+  }
+);
+
+
 export const checkNodesStatus = createAsyncThunk(
   "nodes/checkNodesStatus",
   async (nodes: Node[], thunkAPI) => {
     const { dispatch } = thunkAPI;
     nodes.forEach((node) => {
       dispatch(checkNodeStatus(node));
+    });
+  }
+);
+
+export const getBlocksFromApi = createAsyncThunk(
+  "nodes/getBlocksFromApi",
+  async (nodes: Node[], thunkAPI) => {
+    const { dispatch } = thunkAPI;
+    nodes.forEach((node) => {
+      dispatch(getBlocks(node));
     });
   }
 );
@@ -40,7 +61,6 @@ export const nodesSlice = createSlice({
       const node = state.list.find((n) => n.url === action.meta.arg.url);
       if (node) {
         node.online = true;
-        node.loading = false;
         node.name = action.payload.node_name;
       }
     });
@@ -49,6 +69,17 @@ export const nodesSlice = createSlice({
       if (node) {
         node.online = false;
         node.loading = false;
+      }
+    });
+    builder.addCase(getBlocks.pending, (state, action) => {
+      const node = state.list.find((n) => n.url === action.meta.arg.url && n.online);
+      if (node) node.loading = true;
+    });
+    builder.addCase(getBlocks.fulfilled, (state, action) => {
+      const node = state.list.find((n) => n.url === action.meta.arg.url && n.online);
+      if (node) {
+        node.loading = false;
+        node.blocks = action.payload.data
       }
     });
   },
