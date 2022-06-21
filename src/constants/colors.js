@@ -1,3 +1,4 @@
+//STATIC COLORS
 const colors = {
   text: "#263238",
   faded: "#8a9094",
